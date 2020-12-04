@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProductCatalog.Data;
 using ProductCatalog.Models;
+using ProductCatalog.Repositories;
 using ProductCatalog.ViewModels;
 using ProductCatalog.ViewModels.ProductViewModels;
 using System;
@@ -14,39 +15,37 @@ namespace ProductCatalog.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly StoreDataContext _context;
+        private readonly ProductRepository _repository;
 
-        public ProductController(StoreDataContext context)
+        public ProductController(ProductRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         [HttpGet]
         public IEnumerable<ListProductViewModel> Get()
         {
-            return _context.Products
-                .Include(x => x.Category)
-                .Select(x => new ListProductViewModel
-                {
-                    Id = x.Id,
-                    Title = x.Title,
-                    Price = x.Price,
-                    Category = x.Category.Title,
-                    CategoryId = x.Category.Id
-                })
-                .AsNoTracking()
-                .ToList();
+            return _repository.GetAll();
         }
 
         [HttpGet("{id}")]
         public Product Get(int id)
         {
-            return _context.Products.AsNoTracking().Where(x => x.Id == id).FirstOrDefault();
+            return _repository.GetById(id);
         }
 
         [HttpPost]
         public ResultViewModel Post([FromBody]EditorProductViewModel model)
         {
+            model.Validate();
+            if (model.Invalid)
+                return new ResultViewModel
+                {
+                    Success = false,
+                    Message = "Não foi possível cadastrar o produto.",
+                    Data = model.Notifications
+                };
+
             var product = new Product();
 
             product.Title = model.Title;
@@ -57,10 +56,8 @@ namespace ProductCatalog.Controllers
             product.LastUpdateDate = DateTime.Now;
             product.Price = model.Price;
             product.Quantity = model.Quantity;
-            
-            _context.Products.Add(product);
-            
-            _context.SaveChanges();
+
+            _repository.Save(product);
 
             return new ResultViewModel
             {
@@ -73,7 +70,16 @@ namespace ProductCatalog.Controllers
         [HttpPut]
         public ResultViewModel Put([FromBody]EditorProductViewModel model)
         {
-            var product = _context.Products.Find(model.Id);
+            model.Validate();
+            if (model.Invalid)
+                return new ResultViewModel
+                {
+                    Success = false,
+                    Message = "Não foi possível alterar o produto.",
+                    Data = model.Notifications
+                };
+
+            var product = _repository.GetById(model.Id);
 
             product.Title = model.Title;
             product.CategoryId = model.CategoryId;
@@ -83,9 +89,7 @@ namespace ProductCatalog.Controllers
             product.Price = model.Price;
             product.Quantity = model.Quantity;
 
-            _context.Entry<Product>(product).State = EntityState.Modified;
-
-            _context.SaveChanges();
+            _repository.Update(product);
 
             return new ResultViewModel
             {
@@ -98,11 +102,18 @@ namespace ProductCatalog.Controllers
         [HttpDelete]
         public ResultViewModel Delete([FromBody]EditorProductViewModel model)
         {
-            var product = _context.Products.Find(model.Id);
-            
-            _context.Products.Remove(product);
+            model.Validate();
+            if (model.Invalid)
+                return new ResultViewModel
+                {
+                    Success = false,
+                    Message = "Não foi possível excluir o produto.",
+                    Data = model.Notifications
+                };
 
-            _context.SaveChanges();
+            var product = _repository.GetById(model.Id);
+
+            _repository.Delete(product);
 
             return new ResultViewModel
             {
