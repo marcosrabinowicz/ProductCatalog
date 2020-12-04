@@ -23,6 +23,7 @@ namespace ProductCatalog.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Duration = 5)]
         public IEnumerable<ListProductViewModel> Get()
         {
             return _repository.GetAll();
