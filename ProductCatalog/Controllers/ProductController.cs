@@ -1,13 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProductCatalog.Data;
 using ProductCatalog.Models;
 using ProductCatalog.Repositories;
 using ProductCatalog.ViewModels;
 using ProductCatalog.ViewModels.ProductViewModels;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ProductCatalog.Controllers
 {
@@ -47,16 +44,17 @@ namespace ProductCatalog.Controllers
                     Data = model.Notifications
                 };
 
-            var product = new Product();
-
-            product.Title = model.Title;
-            product.CategoryId = model.CategoryId;
-            product.CreateDate = DateTime.Now;
-            product.Description = model.Description;
-            product.Image = model.Image;
-            product.LastUpdateDate = DateTime.Now;
-            product.Price = model.Price;
-            product.Quantity = model.Quantity;
+            var product = new Product
+            {
+                Title = model.Title,
+                CategoryId = model.CategoryId,
+                CreateDate = DateTime.Now,
+                Description = model.Description,
+                Image = model.Image,
+                LastUpdateDate = DateTime.Now,
+                Price = model.Price,
+                Quantity = model.Quantity
+            };
 
             _repository.Save(product);
 

@@ -25,6 +25,8 @@ namespace ProductCatalog
         {
             services.AddControllers();
 
+            services.AddResponseCompression();
+
             services.AddDbContext<StoreDataContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("SQLServerConnectionString"))
             );
@@ -44,11 +46,13 @@ namespace ProductCatalog
             app.UseHttpsRedirection();
 
             app.UseRouting();
-
+                        
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+            app.UseResponseCompression();
         }
     }
 }
